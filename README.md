@@ -8,3 +8,6 @@ python3 -m http.server 8000
 git add .
 git commit -m "update mario typing game code"
 git push
+
+# Vercel app
+https://typing-game-project-ten.vercel.app/
