@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小瑪利歐打字冒險樂園</title>
+    <style>
+        :root {
+            --mario-sky: #5c94fc;
+            --mario-ground: #00a800;
+            --brick-brown: #bc5c14;
+            --pipe-green: #00b000;
+            --coin-yellow: #f8b800;
+            --sky-blue: #87CEEB;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background: linear-gradient(180deg, var(--mario-sky) 0%, #9cdefc 70%, #d8f0ff 100%);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            color: #ffffff;
+            text-shadow: 3px 3px #000000;
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+
+        /* 經典遊戲框（仿電視螢幕） */
+        .game-frame {
+            background: #222;
+            padding: 12px;
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+            border: 6px solid #444;
+            max-width: 820px;
+            width: 100%;
+        }
+
+        .container {
+            background: #7ec0ee;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 4px solid #fff;
+        }
+
+        /* 關卡選單（綠色水管風格） */
+        .stage-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .stage-btn {
+            background: var(--pipe-green);
+            border: 3px solid #005000;
+            padding: 8px 14px;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #003000;
+            transition: 0.1s;
+        }
+        .stage-btn.active, .stage-btn:hover {
+            background: #00d000;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #003000;
+        }
+
+        /* 數據與進度條 */
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px #000;
+            padding: 0 10px;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background: #000;
+            height: 22px;
+            border-radius: 4px;
+            border: 3px solid #fff;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff3300, var(--coin-yellow));
+            transition: width 0.3s ease;
+        }
+
+        /* 打字目標顯示區（金幣磚塊風） */
+        .target-display {
+            font-size: 2.8rem;
+            letter-spacing: 8px;
+            margin: 15px 0;
+            background: #ffcc00;
+            border: 4px solid #996600;
+            padding: 15px;
+            border-radius: 8px;
+            min-height: 70px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 4px 0 rgba(255,255,255,0.6);
+            color: #333;
+            font-weight: bold;
+        }
+        .char { color: #777; }
+        .char.correct { color: #008000; text-shadow: 1px 1px #fff; }
+        .char.current { border-bottom: 6px solid var(--sky-blue); color: #000; background: rgba(135,206,235,0.4); }
+
+        /* 虛擬鍵盤（磚塊風） */
+        .keyboard {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: center;
+            margin-top: 15px;
+            background: #b5651d;
+            padding: 12px;
+            border-radius: 10px;
+            border: 3px solid #654321;
+            box-shadow: inset 0 3px 5px rgba(0,0,0,0.3);
+        }
+        .key-row {
+            display: flex;
+            gap: 5px;
+        }
+        .key {
+            width: 42px;
+            height: 42px;
+            background: #e6a15c;
+            border: 2px solid #8B4513;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #fff;
+            text-shadow: 1px 1px #5c2c16;
+            box-shadow: 0 4px 0 #8B4513;
+            transition: 0.08s;
+        }
+        .key.highlight {
+            background-color: var(--sky-blue) !important;
+            border-color: #004080 !important;
+            color: #000;
+            text-shadow: none;
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #002040;
+        }
+        .key.space { width: 220px; background: #d9822b; }
+
+        /* 瑪利歐動畫與標語 */
+        #mario-container {
+            position: absolute;
+            bottom: -80px;
+            left: -100px;
+            font-size: 3.5rem;
+            transition: transform 1.5s ease-in-out;
+            pointer-events: none;
+            z-index: 20;
+        }
+        #mario-container.run {
+            animation: runAcross 1.5s linear forwards;
+        }
+        @keyframes runAcross {
+            0% { left: -100px; bottom: 20px; transform: scaleX(1); }
+            50% { bottom: 120px; transform: scaleX(1) rotate(10deg); }
+            100% { left: 105%; bottom: 20px; transform: scaleX(1); }
+        }
+
+        .congrats-msg {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: #ff0000;
+            border: 4px solid #fff;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 1.6rem;
+            font-weight: bold;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 30;
+            text-shadow: 2px 2px #000;
+        }
+        .congrats-msg.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>⭐ 小瑪利歐打字冒險樂園 ⭐</h1>
+
+    <div class="game-frame">
+        <div class="container">
+            <!-- 關卡選單 -->
+            <div class="stage-selector">
+                <button class="stage-btn active" onclick="setStage(0)">1. F 與 J 基礎</button>
+                <button class="stage-btn" onclick="setStage(1)">2. 主鍵盤擴展</button>
+                <button class="stage-btn" onclick="setStage(2)">3. 簡單單字</button>
+                <button class="stage-btn" onclick="setStage(3)">4. 短句挑戰</button>
+            </div>
+
+            <!-- 數據統計 -->
+            <div class="stats">
+                <div>🔥 連擊 (Streak): <span id="streak-count">0</span> / 10</div>
+                <div>🎯 正確率: <span id="accuracy">100</span>%</div>
+            </div>
+
+            <!-- 10連擊進度條 -->
+            <div class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+
+            <!-- 目標文字顯示 -->
+            <div id="target-display" class="target-display"></div>
+
+            <!-- 虛擬鍵盤 -->
+            <div class="keyboard" id="keyboard">
+                <div class="key-row">
+                    <div class="key" data-key="q">q</div><div class="key" data-key="w">w</div><div class="key" data-key="e">e</div><div class="key" data-key="r">r</div><div class="key" data-key="t">t</div><div class="key" data-key="y">y</div><div class="key" data-key="u">u</div><div class="key" data-key="i">i</div><div class="key" data-key="o">o</div><div class="key" data-key="p">p</div>
+                </div>
+                <div class="key-row">
+                    <div class="key" data-key="a">a</div><div class="key" data-key="s">s</div><div class="key" data-key="d">d</div><div class="key" data-key="f">f</div><div class="key" data-key="g">g</div><div class="key" data-key="h">h</div><div class="key" data-key="j">j</div><div class="key" data-key="k">k</div><div class="key" data-key="l">l</div>
+                </div>
+                <div class="key-row">
+                    <div class="key" data-key="z">z</div><div class="key" data-key="x">x</div><div class="key" data-key="c">c</div><div class="key" data-key="v">v</div><div class="key" data-key="b">b</div><div class="key" data-key="n">n</div><div class="key" data-key="m">m</div>
+                </div>
+                <div class="key-row">
+                    <div class="key space" data-key=" ">space</div>
+                </div>
+            </div>
+
+            <!-- 瑪利歐慶祝動畫與標語 -->
+            <div id="mario-container">🍄⭐🏃‍♂️</div>
+            <div id="congrats-msg" class="congrats-msg">🎉 太棒了！10連擊！ ⭐</div>
+        </div>
+    </div>
+
+    <script>
+        const stages = [
+            ["f", "j", "f", "j", "f", "f", "j", "j", "f", "j"],
+            ["f", "d", "j", "k", "f", "j", "d", "k", "a", "l"],
+            ["cat", "dog", "run", "jump", "play", "book", "pen"],
+            ["the quick brown fox", "learning typing is fun"]
+        ];
+
+        let currentStageIndex = 0;
+        let currentTargetText = "";
+        let currentIndex = 0;
+        let streak = 0;
+        let totalTyped = 0;
+        let correctTyped = 0;
+
+        const targetDisplay = document.getElementById("target-display");
+        const streakCountEl = document.getElementById("streak-count");
+        const progressBar = document.getElementById("progress-bar");
+        const accuracyEl = document.getElementById("accuracy");
+        const marioContainer = document.getElementById("mario-container");
+        const congratsMsg = document.getElementById("congrats-msg");
+        let audioContext;
+
+        function playTypingSound(isCorrect) {
+            audioContext ??= new (window.AudioContext || window.webkitAudioContext)();
+            if (audioContext.state === "suspended") audioContext.resume();
+
+            const oscillator = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            const startTime = audioContext.currentTime;
+            const duration = isCorrect ? 0.08 : 0.16;
+
+            oscillator.type = isCorrect ? "sine" : "sawtooth";
+            oscillator.frequency.setValueAtTime(isCorrect ? 660 : 180, startTime);
+            if (!isCorrect) {
+                oscillator.frequency.exponentialRampToValueAtTime(90, startTime + duration);
+            }
+            gain.gain.setValueAtTime(0.0001, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.12, startTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+            oscillator.connect(gain);
+            gain.connect(audioContext.destination);
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration);
+        }
+
+        function setStage(index) {
+            currentStageIndex = index;
+            document.querySelectorAll(".stage-btn").forEach((btn, idx) => {
+                btn.classList.toggle("active", idx === index);
+            });
+            loadNewText();
+        }
+
+        function loadNewText() {
+            const stageTexts = stages[currentStageIndex];
+            currentTargetText = stageTexts[Math.floor(Math.random() * stageTexts.length)];
+            currentIndex = 0;
+            renderText();
+            updateKeyboardHighlight();
+        }
+
+        function renderText() {
+            targetDisplay.innerHTML = "";
+            for (let i = 0; i < currentTargetText.length; i++) {
+                const span = document.createElement("span");
+                span.textContent = currentTargetText[i].toUpperCase();
+                span.className = "char";
+                if (i < currentIndex) {
+                    span.classList.add("correct");
+                } else if (i === currentIndex) {
+                    span.classList.add("current");
+                }
+                targetDisplay.appendChild(span);
+            }
+        }
+
+        function updateKeyboardHighlight() {
+            document.querySelectorAll(".key").forEach(k => k.classList.remove("highlight"));
+            if (currentIndex < currentTargetText.length) {
+                let expectedChar = currentTargetText[currentIndex].toLowerCase();
+                const keyElement = document.querySelector(`.key[data-key="${expectedChar}"]`);
+                if (keyElement) {
+                    keyElement.classList.add("highlight");
+                }
+            }
+        }
+
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "Tab") return;
+            totalTyped++;
+
+            const expectedChar = currentTargetText[currentIndex];
+
+            if (e.key.toLowerCase() === expectedChar.toLowerCase()) {
+                playTypingSound(true);
+                currentIndex++;
+                correctTyped++;
+                streak++;
+
+                let progressPercent = (streak % 10) * 10;
+                if (streak > 0 && streak % 10 === 0) progressPercent = 100;
+                progressBar.style.width = `${progressPercent}%`;
+                streakCountEl.textContent = streak;
+
+                if (streak > 0 && streak % 10 === 0) {
+                    triggerMarioAnimation();
+                }
+
+                if (currentIndex >= currentTargetText.length) {
+                    setTimeout(loadNewText, 350);
+                } else {
+                    renderText();
+                    updateKeyboardHighlight();
+                }
+            } else {
+                playTypingSound(false);
+                streak = 0;
+                streakCountEl.textContent = streak;
+                progressBar.style.width = `0%`;
+            }
+
+            const acc = Math.round((correctTyped / totalTyped) * 100);
+            accuracyEl.textContent = isNaN(acc) ? 100 : acc;
+        });
+
+        function triggerMarioAnimation() {
+            marioContainer.classList.add("run");
+            congratsMsg.classList.add("show");
+
+            setTimeout(() => {
+                marioContainer.classList.remove("run");
+                congratsMsg.classList.remove("show");
+            }, 1500);
+        }
+
+        loadNewText();
+    </script>
+</body>
+</html>
