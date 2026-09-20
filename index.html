@@ -329,9 +329,10 @@
 
         function renderText() {
             targetDisplay.innerHTML = "";
-            for (let i = 0; i < currentTargetText.length; i++) {
+            const visibleEnd = Math.min(currentTargetText.length, currentIndex + 11);
+            for (let i = currentIndex; i < visibleEnd; i++) {
                 const span = document.createElement("span");
-                span.textContent = currentTargetText[i].toUpperCase();
+                span.textContent = currentTargetText[i].toLowerCase();
                 span.className = "char";
                 if (i < currentIndex) {
                     span.classList.add("correct");
