@@ -92,7 +92,7 @@
         #dk-kart {
             position: absolute;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) rotate(90deg);
             bottom: 20px;
             font-size: 3.5rem;
             z-index: 10;
@@ -227,47 +227,30 @@
         }
         .key.highlight {
             background-color: var(--sky-blue) !important;
-            border-color: #004080 !important;
+            border-color: #004080;
             color: #000;
             text-shadow: none;
             transform: translateY(3px);
             box-shadow: 0 1px 0 #002040;
         }
+        #keyboard .key[data-key="a"],
+        #keyboard .key[data-key="s"],
+        #keyboard .key[data-key="d"],
+        #keyboard .key[data-key="f"],
+        #keyboard .key[data-key="j"],
+        #keyboard .key[data-key="k"],
+        #keyboard .key[data-key="l"] {
+            box-sizing: border-box;
+            width: 48px;
+            height: 48px;
+            border: 2px solid #add8e6;
+        }
+        #keyboard .key[data-key="f"],
+        #keyboard .key[data-key="j"] {
+            border-width: 4px;
+        }
         .key.space { width: 220px; background: #d9822b; }
-
-        /* 雙手引導圖形 (SVG) */
-        .hands-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .hand-svg {
-            position: absolute;
-            opacity: 0.35;
-            filter: drop-shadow(0px 10px 10px rgba(0,0,0,0.6));
-        }
-
-        /* 確切定位於鍵盤上，使得食指對齊 F 和 J 鍵 */
-        #left-hand-img {
-            width: 200px;
-            top: 20px;
-            left: 55px; /* 指向 F */
-        }
-        
-        #right-hand-img {
-            width: 200px;
-            top: 20px;
-            right: 55px; /* 指向 J */
-            transform: scaleX(-1); /* 水平翻轉成為右手 */
-        }
+        .keyboard-wrapper.compact-spacebar .key.space { width: 120px; }
 
         /* 錯誤警告提示 */
         .stall-warning {
@@ -334,20 +317,6 @@
             </div>
 
             <div class="keyboard-wrapper">
-                <!-- 雙手引導圖形邊界 -->
-                <div class="hands-overlay">
-                    <!-- 左手 SVG (食指對齊F) -->
-                    <svg class="hand-svg" id="left-hand-img" viewBox="0 0 100 120" preserveAspectRatio="none">
-                        <path d="M40,120 C35,110 30,90 28,70 C25,50 15,40 10,40 C5,40 5,30 10,30 C20,30 25,45 30,50 L35,20 C35,15 42,15 42,20 L45,45 L48,10 C48,5 55,5 55,10 L58,45 L62,5 C62,0 69,0 69,5 L70,50 L75,15 C75,10 82,10 82,15 L80,60 C80,80 70,100 65,120 Z" fill="#ffdbac" stroke="#c99b6c" stroke-width="2" stroke-linejoin="round"/>
-                        <circle cx="69" cy="5" r="4" fill="red" opacity="0.6"/> <!-- 食指紅點 -->
-                    </svg>
-                    <!-- 右手 SVG (水平翻轉後食指對齊J) -->
-                    <svg class="hand-svg" id="right-hand-img" viewBox="0 0 100 120" preserveAspectRatio="none">
-                        <path d="M40,120 C35,110 30,90 28,70 C25,50 15,40 10,40 C5,40 5,30 10,30 C20,30 25,45 30,50 L35,20 C35,15 42,15 42,20 L45,45 L48,10 C48,5 55,5 55,10 L58,45 L62,5 C62,0 69,0 69,5 L70,50 L75,15 C75,10 82,10 82,15 L80,60 C80,80 70,100 65,120 Z" fill="#ffdbac" stroke="#c99b6c" stroke-width="2" stroke-linejoin="round"/>
-                        <circle cx="69" cy="5" r="4" fill="red" opacity="0.6"/> <!-- 食指紅點 -->
-                    </svg>
-                </div>
-
                 <div class="keyboard" id="keyboard">
                     <div class="key-row">
                         <div class="key" data-key="q">q</div><div class="key" data-key="w">w</div><div class="key" data-key="e">e</div><div class="key" data-key="r">r</div><div class="key" data-key="t">t</div><div class="key" data-key="y">y</div><div class="key" data-key="u">u</div><div class="key" data-key="i">i</div><div class="key" data-key="o">o</div><div class="key" data-key="p">p</div>
@@ -374,10 +343,10 @@
          */
         
         // Simulating "level_1.txt" (Easier, only asdfjkl)
-        const level_1_txt = "a s d f j k l f d s a l k j f j f j d k d k s l s l a a j j a s d f j k l asdf jkl fdsa lkj a s d f j k l f d s a l k j a s d f j k l asdf jkl";
+        const level_1_txt = "asdfjkl fdsa lkj fj fj dk dk sl sl aa jj asdfjkl lkjfdsa asdfjkl fdsa lkj asdfjkl";
 
         // Simulating "level_2.txt" (Middle line random letters - old level 1)
-        const level_2_txt = "asdf jkl; fdsa ;lkj asdfg hjkl; gfdsa ;lkjh f d s a j k l ; a s d f j k l ; g h g h asdf jkl; fdsa ;lkj f j f j f j a s d f g h j k l ; a s d f g h j k l ; d k d k s l s l a ; a ; f j d k s l a ; f j asdfg hjkl; gfdsa ;lkjh";
+        const level_2_txt = "asdf jkl; fdsa ;lkj asdfg hjkl; gfdsa ;lkjh fdsajkl; asdfjkl; ghgh asdfjkl; fdsa; lkj fjfjfj asdfghjkl; asdfghjkl; dkdk slsla; a; fjdksla; fj asdfg hjkl; gfdsa; lkjh";
 
         // Simulating "level_3.txt" (Middle line meaningful words - old level 2)
         const level_3_txt = "dad sad flag glass lad gas salad half ash dash glad fall jag has had gall flas alas gaff hag lag sag hall sall fall dad sad flag glass lad gas salad half ash dash glad fall jag has had gall flas alas gaff hag lag sag hall sall fall";
@@ -419,7 +388,44 @@
         let activeObstacles = [];
         let audioContext;
 
+        function playWaterDrop() {
+            audioContext ??= new (window.AudioContext || window.webkitAudioContext)();
+            if (audioContext.state === "suspended") audioContext.resume();
+
+            const startTime = audioContext.currentTime;
+            const drop = audioContext.createOscillator();
+            const dropGain = audioContext.createGain();
+            drop.type = "sine";
+            drop.frequency.setValueAtTime(1180, startTime);
+            drop.frequency.exponentialRampToValueAtTime(520, startTime + 0.22);
+            dropGain.gain.setValueAtTime(0.0001, startTime);
+            dropGain.gain.exponentialRampToValueAtTime(0.12, startTime + 0.005);
+            dropGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.24);
+            drop.connect(dropGain);
+            dropGain.connect(audioContext.destination);
+            drop.start(startTime);
+            drop.stop(startTime + 0.25);
+
+            const shimmer = audioContext.createOscillator();
+            const shimmerGain = audioContext.createGain();
+            shimmer.type = "sine";
+            shimmer.frequency.setValueAtTime(2360, startTime);
+            shimmer.frequency.exponentialRampToValueAtTime(1180, startTime + 0.1);
+            shimmerGain.gain.setValueAtTime(0.0001, startTime);
+            shimmerGain.gain.exponentialRampToValueAtTime(0.025, startTime + 0.003);
+            shimmerGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.12);
+            shimmer.connect(shimmerGain);
+            shimmerGain.connect(audioContext.destination);
+            shimmer.start(startTime);
+            shimmer.stop(startTime + 0.13);
+        }
+
         function playSound(isCorrect) {
+            if (isCorrect) {
+                playWaterDrop();
+                return;
+            }
+
             audioContext ??= new (window.AudioContext || window.webkitAudioContext)();
             if (audioContext.state === "suspended") audioContext.resume();
 
@@ -427,17 +433,15 @@
             const gain = audioContext.createGain();
             const startTime = audioContext.currentTime;
             
-            // Correct typing sounds like engine revving slightly, incorrect is a low honk
-            const duration = isCorrect ? 0.05 : 0.2;
-            oscillator.type = isCorrect ? "sine" : "sawtooth";
-            oscillator.frequency.setValueAtTime(isCorrect ? 600 : 120, startTime);
+            // Incorrect typing sounds like a low honk.
+            const duration = 0.2;
+            oscillator.type = "sawtooth";
+            oscillator.frequency.setValueAtTime(120, startTime);
             
-            if (!isCorrect) {
-                oscillator.frequency.exponentialRampToValueAtTime(60, startTime + duration);
-            }
+            oscillator.frequency.exponentialRampToValueAtTime(60, startTime + duration);
             
             gain.gain.setValueAtTime(0.0001, startTime);
-            gain.gain.exponentialRampToValueAtTime(isCorrect ? 0.08 : 0.2, startTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.2, startTime + 0.01);
             gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
             oscillator.connect(gain);
@@ -456,6 +460,7 @@
 
         function loadLevelText() {
             fullText = stageData[currentStage];
+            document.querySelector(".keyboard-wrapper").classList.toggle("compact-spacebar", currentStage <= 2);
             currentIndex = 0;
             totalTyped = 0;
             correctTyped = 0;
