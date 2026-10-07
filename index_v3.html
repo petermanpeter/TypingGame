@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mario Typing Game</title>
+    <title>驢子剛哥卡丁車打字冒險 (直向賽道版)</title>
     <style>
         :root {
             --mario-sky: #5c94fc;
@@ -14,7 +14,7 @@
             --sky-blue: #87CEEB;
             --dk-orange: #d96b27;
             --dk-brown: #5c3a21;
-            --asphalt: #444444;
+            --asphalt: #333333;
         }
 
         body {
@@ -39,78 +39,27 @@
             text-align: center;
         }
 
-        .aerial-kart-card {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            width: 120px;
-            height: 120px;
-            overflow: hidden;
-            border: 3px solid #5c3a21;
-            border-radius: 12px;
-            background: #fff;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
-            z-index: 20;
-        }
-
-        .aerial-kart-card svg,
-        .kart-back-view {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        @media (max-width: 600px) {
-            .aerial-kart-card {
-                width: 72px;
-                height: 72px;
-                top: 8px;
-                left: 8px;
-            }
-
-            h1 {
-                margin-top: 85px;
-            }
-        }
-
         .game-layout {
             display: flex;
             flex-direction: row;
             gap: 20px;
-            max-width: 1200px;
+            max-width: 1000px;
             width: 100%;
             justify-content: center;
             align-items: flex-start;
         }
 
-        /* 3D 賽道場景 (2.5D 視角) */
-        .track-scene {
-            width: 450px; /* Increased Width */
+        /* 直向賽道區 */
+        .track-container {
+            width: 180px;
             height: 500px;
-            perspective: 400px; /* Strong 3D depth */
-            position: relative;
-            overflow: hidden;
+            background: var(--asphalt);
             border: 8px solid #888;
             border-radius: 12px;
-            background: linear-gradient(to bottom, #87CEEB 0%, #a2d8f0 30%, var(--mario-ground) 30%); /* Sky and grass background */
-            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6), inset 0 0 15px rgba(0,0,0,0.8);
             flex-shrink: 0;
-            display: flex;
-            justify-content: center;
-        }
-
-        /* 實際滾動的賽道平面 */
-        .track-container {
-            width: 120%; /* Wider than container to avoid edge gaps during rotation */
-            height: 200%; /* Extra height to cover the rotated view */
-            background: var(--asphalt);
-            position: absolute;
-            bottom: -10%; /* Shifted down slightly */
-            transform-origin: bottom center;
-            transform: rotateX(65deg); /* Flattens into the screen */
-            border-left: 25px solid #ccc; /* Curbs */
-            border-right: 25px solid #ccc; /* Curbs */
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.9);
         }
 
         /* 賽道虛線 */
@@ -118,15 +67,15 @@
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            width: 15px;
-            height: 300%;
+            width: 10px;
+            height: 200%;
             top: -100%;
             background: repeating-linear-gradient(
                 to bottom,
                 #ffffff 0,
-                #ffffff 80px,
-                transparent 80px,
-                transparent 160px
+                #ffffff 40px,
+                transparent 40px,
+                transparent 80px
             );
             z-index: 1;
         }
@@ -134,39 +83,23 @@
         /* 障礙物與裝飾 */
         .obstacle {
             position: absolute;
-            font-size: 3.5rem; /* Made bigger to compensate for perspective scaling */
+            font-size: 2rem;
             z-index: 2;
-            transform-origin: bottom center;
-            /* Reverse the road's X rotation so obstacles stand upright */
-            transform: translateX(-50%) rotateX(-65deg); 
-            filter: drop-shadow(2px 10px 5px rgba(0,0,0,0.5));
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));
         }
 
+        /* 驢子剛哥卡丁車 */
         #dk-kart {
             position: absolute;
             left: 50%;
-            transform: translateX(-50%);
-            bottom: 30px;
-            width: 145px;
-            height: 155px;
+            transform: translateX(-50%) rotate(90deg);
+            bottom: 20px;
+            font-size: 3.5rem;
             z-index: 10;
+            filter: drop-shadow(3px 3px 2px rgba(0,0,0,0.6));
+            transition: bottom 0.2s ease-out;
         }
 
-        .flame {
-            position: absolute;
-            bottom: -5px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 12px;
-            height: 25px;
-            background: linear-gradient(to bottom, yellow, orange, red, transparent);
-            border-radius: 50%;
-            opacity: 0;
-            transition: opacity 0.1s;
-            pointer-events: none;
-        }
-
-        /* 原有的 UI 樣式維持不變... */
         .ui-container {
             flex-grow: 1;
             background: #6ab0de;
@@ -180,6 +113,7 @@
             max-width: 700px;
         }
 
+        /* 關卡選單 */
         .stage-selector {
             display: flex;
             justify-content: center;
@@ -217,14 +151,7 @@
             border-radius: 8px;
         }
 
-        .correct-count {
-            color: #00ff66;
-        }
-
-        .incorrect-count {
-            color: #ff6666;
-        }
-
+        /* 滾動式文字顯示區 */
         .text-window {
             background: #ffcc00;
             border: 4px solid #996600;
@@ -280,6 +207,7 @@
             display: flex;
             gap: 6px;
         }
+        /* 按鍵與字體放大 - 字體佔比約 60% (26px / 44px) */
         .key {
             width: 44px;
             height: 44px;
@@ -290,7 +218,7 @@
             justify-content: center;
             align-items: center;
             font-weight: bold;
-            font-size: 26px;
+            font-size: 26px; /* Larger letter size */
             color: #fff;
             text-shadow: 2px 2px #5c2c16;
             box-shadow: 0 4px 0 #8B4513;
@@ -305,11 +233,26 @@
             transform: translateY(3px);
             box-shadow: 0 1px 0 #002040;
         }
-        #keyboard .key[data-key="a"], #keyboard .key[data-key="s"], #keyboard .key[data-key="d"], #keyboard .key[data-key="f"], #keyboard .key[data-key="j"], #keyboard .key[data-key="k"], #keyboard .key[data-key="l"] { box-sizing: border-box; width: 48px; height: 48px; border: 2px solid #add8e6; }
-        #keyboard .key[data-key="f"], #keyboard .key[data-key="j"] { border-width: 4px; }
+        #keyboard .key[data-key="a"],
+        #keyboard .key[data-key="s"],
+        #keyboard .key[data-key="d"],
+        #keyboard .key[data-key="f"],
+        #keyboard .key[data-key="j"],
+        #keyboard .key[data-key="k"],
+        #keyboard .key[data-key="l"] {
+            box-sizing: border-box;
+            width: 48px;
+            height: 48px;
+            border: 2px solid #add8e6;
+        }
+        #keyboard .key[data-key="f"],
+        #keyboard .key[data-key="j"] {
+            border-width: 4px;
+        }
         .key.space { width: 220px; background: #d9822b; }
         .keyboard-wrapper.compact-spacebar .key.space { width: 120px; }
 
+        /* 錯誤警告提示 */
         .stall-warning {
             color: #ff3333;
             font-weight: bold;
@@ -317,9 +260,10 @@
         }
         @keyframes blink { from { opacity: 1; } to { opacity: 0.2; } }
 
+        /* 勝利提示 */
         .congrats-msg {
             position: absolute;
-            top: 40%;
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) scale(0);
             background: #d9381e;
@@ -340,30 +284,14 @@
 </head>
 <body>
 
-    <div class="aerial-kart-card">
-        <svg viewBox="25 280 960 960" role="img" aria-label="Aerial view of Donkey Kong's kart">
-            <image href="DonkeyKong_car.jpg" width="2752" height="1536" />
-        </svg>
-    </div>
-
-    <h1>Mario Typing Game</h1>
+    <h1>🏎️ 驢子剛哥卡丁車打字冒險 🏎️</h1>
 
     <div class="game-layout">
-        
-        <!-- 3D 賽道場景區 -->
-        <div class="track-scene">
-            <div class="track-container" id="track-container">
-                <div class="road-lines" id="road-lines"></div>
-                <div id="obstacles-layer"></div>
-            </div>
-            
-            <div id="dk-kart">
-                <svg class="kart-back-view" viewBox="955 330 860 930" role="img" aria-label="Back view of Donkey Kong's kart">
-                    <image href="DonkeyKong_car.jpg" width="2752" height="1536" />
-                </svg>
-                <div class="flame" id="kart-flame"></div>
-            </div>
-            
+        <!-- 賽道區 (Vertical Track) -->
+        <div class="track-container">
+            <div class="road-lines" id="road-lines"></div>
+            <div id="obstacles-layer"></div>
+            <div id="dk-kart">🏎️</div>
             <div id="congrats-msg" class="congrats-msg">🏆 關卡完成！ 🍌</div>
         </div>
 
@@ -378,7 +306,6 @@
 
             <div class="stats">
                 <div>⚡ 時速: <span id="speed-label">0</span> km/h <span id="status-text"></span></div>
-                <div><span class="correct-count">✅ 正確: <span id="correct-count">0</span></span>　<span class="incorrect-count">❌ 錯誤: <span id="incorrect-count">0</span></span></div>
                 <div>🎯 準確率: <span id="accuracy">100</span>%</div>
             </div>
 
@@ -409,26 +336,42 @@
     </div>
 
     <script>
+        /* 
+         * Requirements Note: Since browser JS cannot natively read local files without a file picker, 
+         * the contents of the requested external text files ("level_1.txt", "level_2.txt", "level_3.txt") 
+         * are simulated here using long string variables.
+         */
+        
+        // Simulating "level_1.txt" (Easier, only asdfjkl)
         const level_1_txt = "asdfjkl fdsa lkj fj fj dk dk sl sl aa jj asdfjkl lkjfdsa asdfjkl fdsa lkj asdfjkl";
+
+        // Simulating "level_2.txt" (Middle line random letters - old level 1)
         const level_2_txt = "asdf jkl; fdsa ;lkj asdfg hjkl; gfdsa ;lkjh fdsajkl; asdfjkl; ghgh asdfjkl; fdsa; lkj fjfjfj asdfghjkl; asdfghjkl; dkdk slsla; a; fjdksla; fj asdfg hjkl; gfdsa; lkjh";
+
+        // Simulating "level_3.txt" (Middle line meaningful words - old level 2)
         const level_3_txt = "dad sad flag glass lad gas salad half ash dash glad fall jag has had gall flas alas gaff hag lag sag hall sall fall dad sad flag glass lad gas salad half ash dash glad fall jag has had gall flas alas gaff hag lag sag hall sall fall";
+
+        // Simulating "level_4.txt" (Full long paragraph challenge - old level 3)
         const level_4_txt = "Donkey Kong is a classic video game character created by Shigeru Miyamoto. He is a large gorilla who loves bananas and drives a kart with great speed. Typing correctly will boost your kart forward along the track, dodging obstacles and racing towards the finish line. Keep your fingers on the home row to maximize your typing speed and accuracy.";
 
-        const stageData = { 1: level_1_txt, 2: level_2_txt, 3: level_3_txt, 4: level_4_txt };
+        const stageData = {
+            1: level_1_txt,
+            2: level_2_txt,
+            3: level_3_txt,
+            4: level_4_txt
+        };
 
         let currentStage = 1;
         let fullText = "";
         let currentIndex = 0;
         let totalTyped = 0;
         let correctTyped = 0;
-        let incorrectTyped = 0;
 
-        // Smooth Speed Physics Variables
-        let targetVelocity = 0;    // The speed you *should* be going based on typing
-        let kartVelocity = 0;      // The smoothed actual speed
-        let roadOffset = 0;        
-        let baseKartY = 30;        
-        const maxVelocity = 25;    
+        // 賽車物理變數
+        let kartVelocity = 0;      // 當前向上推力
+        let roadOffset = 0;        // 賽道捲動偏移量
+        let baseKartY = 20;        // 車輛底部基礎高度
+        const maxVelocity = 15;    // 最大速度
         
         // DOM Elements
         const textPastEl = document.getElementById("text-past");
@@ -437,11 +380,8 @@
         const speedLabel = document.getElementById("speed-label");
         const statusText = document.getElementById("status-text");
         const accuracyEl = document.getElementById("accuracy");
-        const correctCountEl = document.getElementById("correct-count");
-        const incorrectCountEl = document.getElementById("incorrect-count");
         const roadLines = document.getElementById("road-lines");
         const dkKart = document.getElementById("dk-kart");
-        const flameEffect = document.getElementById("kart-flame");
         const obstaclesLayer = document.getElementById("obstacles-layer");
         const congratsMsg = document.getElementById("congrats-msg");
 
@@ -465,10 +405,26 @@
             dropGain.connect(audioContext.destination);
             drop.start(startTime);
             drop.stop(startTime + 0.25);
+
+            const shimmer = audioContext.createOscillator();
+            const shimmerGain = audioContext.createGain();
+            shimmer.type = "sine";
+            shimmer.frequency.setValueAtTime(2360, startTime);
+            shimmer.frequency.exponentialRampToValueAtTime(1180, startTime + 0.1);
+            shimmerGain.gain.setValueAtTime(0.0001, startTime);
+            shimmerGain.gain.exponentialRampToValueAtTime(0.025, startTime + 0.003);
+            shimmerGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.12);
+            shimmer.connect(shimmerGain);
+            shimmerGain.connect(audioContext.destination);
+            shimmer.start(startTime);
+            shimmer.stop(startTime + 0.13);
         }
 
         function playSound(isCorrect) {
-            if (isCorrect) { playWaterDrop(); return; }
+            if (isCorrect) {
+                playWaterDrop();
+                return;
+            }
 
             audioContext ??= new (window.AudioContext || window.webkitAudioContext)();
             if (audioContext.state === "suspended") audioContext.resume();
@@ -477,9 +433,11 @@
             const gain = audioContext.createGain();
             const startTime = audioContext.currentTime;
             
+            // Incorrect typing sounds like a low honk.
             const duration = 0.2;
             oscillator.type = "sawtooth";
             oscillator.frequency.setValueAtTime(120, startTime);
+            
             oscillator.frequency.exponentialRampToValueAtTime(60, startTime + duration);
             
             gain.gain.setValueAtTime(0.0001, startTime);
@@ -506,21 +464,21 @@
             currentIndex = 0;
             totalTyped = 0;
             correctTyped = 0;
-            incorrectTyped = 0;
-            targetVelocity = 0;
             kartVelocity = 0;
             activeObstacles.forEach(obs => obs.element.remove());
             activeObstacles = [];
             accuracyEl.textContent = "100";
-            correctCountEl.textContent = "0";
-            incorrectCountEl.textContent = "0";
             updateTextDisplay();
             updateKeyboardHighlight();
         }
 
+        // 滾動式視窗文字顯示邏輯
         function updateTextDisplay() {
+            // 前方文字 (最多顯示10個字元)
             const pastChars = fullText.substring(Math.max(0, currentIndex - 10), currentIndex);
+            // 當前目標字元
             const currentChar = fullText[currentIndex] || "";
+            // 後方預覽文字 (顯示後續約 20 個字元)
             const futureChars = fullText.substring(currentIndex + 1, currentIndex + 20);
 
             textPastEl.textContent = pastChars.replace(/ /g, '␣');
@@ -528,19 +486,24 @@
             textFutureEl.textContent = futureChars.replace(/ /g, '␣');
         }
 
+        // 更新虛擬鍵盤高亮
         function updateKeyboardHighlight() {
             document.querySelectorAll(".key").forEach(k => k.classList.remove("highlight"));
             if (currentIndex < fullText.length) {
                 let expectedChar = fullText[currentIndex].toLowerCase();
-                if(expectedChar === ';') expectedChar = 'l'; 
+                // 處理特殊的符號對應 (例如中排的分號)
+                if(expectedChar === ';') expectedChar = 'l'; // 暫時高亮 L 以防沒有分號鍵
                 
                 const keyElement = document.querySelector(`.key[data-key="${expectedChar}"]`);
-                if (keyElement) keyElement.classList.add("highlight");
+                if (keyElement) {
+                    keyElement.classList.add("highlight");
+                }
             }
         }
 
         window.addEventListener("keydown", (e) => {
             if (e.key === "Tab" || currentIndex >= fullText.length) return;
+            // 避免干擾如 F5 重新整理等
             if (e.key.length > 1 && e.key !== " ") return; 
 
             totalTyped++;
@@ -550,15 +513,11 @@
                 playSound(true);
                 currentIndex++;
                 correctTyped++;
-                correctCountEl.textContent = correctTyped;
 
-                // Smooth Acceleration logic (increments target velocity)
-                targetVelocity += 4.5;
-                if (targetVelocity > maxVelocity) targetVelocity = maxVelocity;
-                statusText.innerHTML = ""; 
-                
-                // Show flame effect when typing fast
-                flameEffect.style.opacity = (targetVelocity / maxVelocity);
+                // 打字正確，車子加速 (向上)
+                kartVelocity += 2.5;
+                if (kartVelocity > maxVelocity) kartVelocity = maxVelocity;
+                statusText.innerHTML = ""; // 清除警告
 
                 if (currentIndex >= fullText.length) {
                     triggerVictory();
@@ -568,90 +527,90 @@
                 }
             } else {
                 playSound(false);
-                incorrectTyped++;
-                incorrectCountEl.textContent = incorrectTyped;
-                // Smoother penalty: heavily apply brakes rather than dropping to absolute zero instantly
-                targetVelocity *= 0.25; 
-                flameEffect.style.opacity = "0";
-                statusText.innerHTML = `<span class="stall-warning">🛑 減速!</span>`;
+                // 打錯字：瞬間煞車/停止
+                kartVelocity = 0;
+                statusText.innerHTML = `<span class="stall-warning">🛑 熄火!</span>`;
             }
 
             const acc = Math.round((correctTyped / totalTyped) * 100);
             accuracyEl.textContent = isNaN(acc) ? 100 : acc;
             
+            // 阻止空格鍵預設的頁面捲動行為
             if(e.key === " ") e.preventDefault();
         });
 
+        // 產生隨機賽道障礙物 (純視覺裝飾往下飄)
         function spawnObstacle() {
             const emojis = ["🍄", "🐢", "🍌", "🪨", "🪙"];
             const ob = document.createElement("div");
             ob.className = "obstacle";
             ob.textContent = emojis[Math.floor(Math.random() * emojis.length)];
             
-            // Generate position across the wider 2.5D track bounds
-            const trackWidth = 400; // Represents internal bounds of the wider track
-            const xPos = (Math.random() * trackWidth) + 20; 
+            // 隨機X位置，在賽道範圍內
+            const trackWidth = 180;
+            const obWidth = 30;
+            const xPos = Math.random() * (trackWidth - obWidth);
             
             ob.style.left = `${xPos}px`;
-            ob.style.top = `-100px`; // Start far away (top of the rotated road)
+            ob.style.top = `-50px`; // 初始在畫面外上方
             
             obstaclesLayer.appendChild(ob);
-            activeObstacles.push({ element: ob, y: -100, x: xPos });
+            activeObstacles.push({ element: ob, y: -50, x: xPos });
         }
 
+        // 賽車與賽道物理循環
         function gameLoop() {
-            // 1) Natural deceleration of Target Velocity
-            targetVelocity -= 0.12;
-            if (targetVelocity < 0) targetVelocity = 0;
-
-            // 2) Lerp (Linear Interpolation) to smoothly bridge actual velocity to target
-            kartVelocity += (targetVelocity - kartVelocity) * 0.08; 
-
-            if (kartVelocity > 0.1) {
-                // Move road
+            // 如果有速度，賽道往下捲動 (產生車子往上的視覺效果)
+            if (kartVelocity > 0) {
                 roadOffset += kartVelocity;
-                roadLines.style.transform = `translateX(-50%) translateY(${roadOffset % 160}px)`;
+                roadLines.style.transform = `translateX(-50%) translateY(${roadOffset % 80}px)`;
                 
-                // Shift kart forward slightly for speed feedback 
-                let visualY = baseKartY + (kartVelocity * 1.5);
+                // 車輛本體稍微往前推 (視覺回饋)
+                let visualY = baseKartY + (kartVelocity * 2.5);
                 dkKart.style.bottom = `${visualY}px`;
                 
-                // Dim flame effect slightly over time if not typing
-                flameEffect.style.opacity = kartVelocity / maxVelocity;
-
-                if (Math.random() < 0.03 && kartVelocity > 8) spawnObstacle();
+                // 摩擦力減速
+                kartVelocity -= 0.15;
+                if (kartVelocity < 0) kartVelocity = 0;
+                
+                // 隨機產生障礙物
+                if (Math.random() < 0.03 && kartVelocity > 5) spawnObstacle();
             } else {
+                // 沒有速度時車子退回底部
                 dkKart.style.bottom = `${baseKartY}px`;
-                flameEffect.style.opacity = "0";
             }
 
-            // Move Obstacles Down the 2.5D plane
+            // 更新障礙物位置 (往下掉)
             for (let i = activeObstacles.length - 1; i >= 0; i--) {
                 let obs = activeObstacles[i];
-                obs.y += kartVelocity * 1.2; // Perspective creates illusion of faster approach
+                // 障礙物掉落速度取決於車速
+                obs.y += kartVelocity;
                 obs.element.style.top = `${obs.y}px`;
                 
-                if (obs.y > 1000) {
+                // 移除超過底部的障礙物
+                if (obs.y > 600) {
                     obs.element.remove();
                     activeObstacles.splice(i, 1);
                 }
             }
 
-            speedLabel.textContent = Math.round(kartVelocity * 7);
+            // 更新儀表板時速顯示 (將 velocity 轉換為虛擬 km/h)
+            speedLabel.textContent = Math.round(kartVelocity * 8);
 
             requestAnimationFrame(gameLoop);
         }
 
         function triggerVictory() {
-            targetVelocity = maxVelocity * 1.5; // Victory burst
+            kartVelocity = maxVelocity * 1.5; // 衝線加速
             congratsMsg.classList.add("show");
             setTimeout(() => {
                 congratsMsg.classList.remove("show");
-                targetVelocity = 0;
-                setStage(currentStage === 4 ? 1 : currentStage + 1); 
+                kartVelocity = 0;
+                setStage(currentStage === 4 ? 1 : currentStage + 1); // 循環到下一關
             }, 3000);
         }
 
+        // 啟動遊戲
         loadLevelText();
         requestAnimationFrame(gameLoop);
     </script>
