@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^python3 - <<'PY'\nfrom html\\.parser import HTMLParser\nfrom pathlib import Path\nfrom PIL import Image\n\nclass KartImageParser\\(HTMLParser\\):\n    kart_images = \\[\\]\n    def handle_starttag\\(self, tag, attrs\\):\n        attributes = dict\\(attrs\\)\n        if attributes\\.get\\('class'\\) == 'kart-back-view':\n            self\\.kart_images\\.append\\(\\(tag, attributes\\)\\)\n\nparser = KartImageParser\\(\\)\nparser\\.feed\\(Path\\('index\\.html'\\)\\.read_text\\(\\)\\)\nassert len\\(parser\\.kart_images\\) == 1, parser\\.kart_images\nassert parser\\.kart_images\\[0\\]\\[0\\] == 'img'\nassert parser\\.kart_images\\[0\\]\\[1\\]\\.get\\('src'\\) == 'DonkeyKong_kart_back\\.png'\nimage = Image\\.open\\('DonkeyKong_kart_back\\.png'\\)\\.convert\\('RGBA'\\)\nalpha = image\\.getchannel\\('A'\\)\nassert alpha\\.getextrema\\(\\)\\[0\\] == 0\nassert sum\\(pixel == 0 for pixel in alpha\\.getdata\\(\\)\\) > 200_000\nassert Path\\('DonkeyKong_kart_back\\.png'\\)\\.is_file\\(\\)\nprint\\('Kart markup references the transparent PNG; transparency verified\\.'\\)\nPath\\('/tmp/kart-mask-check\\.jpg'\\)\\.unlink\\(missing_ok=True\\)\nPath\\('/tmp/kart-final-check\\.jpg'\\)\\.unlink\\(missing_ok=True\\)\nPY\ngit diff --check && git status --short$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

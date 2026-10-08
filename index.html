@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mario Typing Game</title>
+    <title>Donkey Kong Typing Game</title>
     <style>
         :root {
             --mario-sky: #5c94fc;
@@ -31,13 +31,20 @@
         }
 
         h1 {
-            color: #ffffff;
-            text-shadow: 2px 2px #000000, 4px 4px var(--dk-brown);
-            font-size: 2rem;
+            font-size: clamp(2.5rem, 6vw, 4rem);
             margin: 5px 0 15px 0;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
+            line-height: 1.1;
             text-align: center;
+            text-shadow: 2px 2px #000000, 4px 4px var(--dk-brown);
         }
+
+        .title-letter:nth-child(6n + 1) { color: #ff3333; }
+        .title-letter:nth-child(6n + 2) { color: #ff9f1c; }
+        .title-letter:nth-child(6n + 3) { color: #ffe600; }
+        .title-letter:nth-child(6n + 4) { color: #35d04f; }
+        .title-letter:nth-child(6n + 5) { color: #3399ff; }
+        .title-letter:nth-child(6n) { color: #b45cff; }
 
         .aerial-kart-card {
             position: fixed;
@@ -145,7 +152,8 @@
         #dk-kart {
             position: absolute;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(calc(-50% + var(--kart-offset, 0px)));
+            transition: transform 0.18s ease-out;
             bottom: 30px;
             width: 145px;
             height: 155px;
@@ -225,7 +233,54 @@
             color: #ff6666;
         }
 
+        .typing-prompt-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .steering-control {
+            box-sizing: border-box;
+            flex: 0 0 64px;
+            height: 88px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 6px;
+            background: #e6a800;
+            border: 3px solid #996600;
+            border-radius: 8px;
+            color: #332200;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .steering-control.active {
+            border: 4px solid #003b8f;
+            box-shadow: 0 0 8px rgba(0, 59, 143, 0.8);
+        }
+
+        .steering-control:focus-visible {
+            outline: 3px solid #003b8f;
+            outline-offset: 2px;
+        }
+
+        .steering-arrow {
+            font-size: 2rem;
+            line-height: 1;
+        }
+
+        .steering-key {
+            font-size: 1.3rem;
+            line-height: 1;
+        }
+
         .text-window {
+            flex: 1;
+            min-width: 0;
             background: #ffcc00;
             border: 4px solid #996600;
             padding: 15px 20px;
@@ -346,7 +401,7 @@
         </svg>
     </div>
 
-    <h1>Mario Typing Game</h1>
+    <h1><span class="title-letter">D</span><span class="title-letter">o</span><span class="title-letter">n</span><span class="title-letter">k</span><span class="title-letter">e</span><span class="title-letter">y</span> <span class="title-letter">K</span><span class="title-letter">o</span><span class="title-letter">n</span><span class="title-letter">g</span> <span class="title-letter">T</span><span class="title-letter">y</span><span class="title-letter">p</span><span class="title-letter">i</span><span class="title-letter">n</span><span class="title-letter">g</span> <span class="title-letter">G</span><span class="title-letter">a</span><span class="title-letter">m</span><span class="title-letter">e</span></h1>
 
     <div class="game-layout">
         
@@ -358,9 +413,7 @@
             </div>
             
             <div id="dk-kart">
-                <svg class="kart-back-view" viewBox="955 330 860 930" role="img" aria-label="Back view of Donkey Kong's kart">
-                    <image href="DonkeyKong_car.jpg" width="2752" height="1536" />
-                </svg>
+                <img class="kart-back-view" src="DonkeyKong_kart_back.png" alt="Back view of Donkey Kong's kart">
                 <div class="flame" id="kart-flame"></div>
             </div>
             
@@ -383,10 +436,20 @@
             </div>
 
             <!-- 視窗式文字顯示 (Sliding Window) -->
-            <div class="text-window" id="text-window">
-                <span class="text-past" id="text-past"></span>
-                <span class="text-current" id="text-current"></span>
-                <span class="text-future" id="text-future"></span>
+            <div class="typing-prompt-controls">
+                <button class="steering-control" id="steer-left" type="button" aria-label="Steer left with key 4">
+                    <span class="steering-arrow" aria-hidden="true">←</span>
+                    <span class="steering-key">4</span>
+                </button>
+                <div class="text-window" id="text-window">
+                    <span class="text-past" id="text-past"></span>
+                    <span class="text-current" id="text-current"></span>
+                    <span class="text-future" id="text-future"></span>
+                </div>
+                <button class="steering-control" id="steer-right" type="button" aria-label="Steer right with key 7">
+                    <span class="steering-arrow" aria-hidden="true">→</span>
+                    <span class="steering-key">7</span>
+                </button>
             </div>
 
             <div class="keyboard-wrapper">
@@ -427,6 +490,7 @@
         let targetVelocity = 0;    // The speed you *should* be going based on typing
         let kartVelocity = 0;      // The smoothed actual speed
         let roadOffset = 0;        
+        let kartOffset = 0;
         let baseKartY = 30;        
         const maxVelocity = 25;    
         
@@ -436,12 +500,15 @@
         const textFutureEl = document.getElementById("text-future");
         const speedLabel = document.getElementById("speed-label");
         const statusText = document.getElementById("status-text");
+        const trackScene = document.querySelector(".track-scene");
         const accuracyEl = document.getElementById("accuracy");
         const correctCountEl = document.getElementById("correct-count");
         const incorrectCountEl = document.getElementById("incorrect-count");
         const roadLines = document.getElementById("road-lines");
         const dkKart = document.getElementById("dk-kart");
         const flameEffect = document.getElementById("kart-flame");
+        const steerLeft = document.getElementById("steer-left");
+        const steerRight = document.getElementById("steer-right");
         const obstaclesLayer = document.getElementById("obstacles-layer");
         const congratsMsg = document.getElementById("congrats-msg");
 
@@ -504,6 +571,9 @@
             fullText = stageData[currentStage];
             document.querySelector(".keyboard-wrapper").classList.toggle("compact-spacebar", currentStage <= 2);
             currentIndex = 0;
+            kartOffset = 0;
+            dkKart.style.setProperty("--kart-offset", "0px");
+            clearSteeringHighlight();
             totalTyped = 0;
             correctTyped = 0;
             incorrectTyped = 0;
@@ -517,6 +587,26 @@
             updateTextDisplay();
             updateKeyboardHighlight();
         }
+
+        function clearSteeringHighlight() {
+            steerLeft.classList.remove("active");
+            steerRight.classList.remove("active");
+        }
+
+        function steerKart(direction) {
+            const maxOffset = Math.max(0, (trackScene.clientWidth - dkKart.offsetWidth) / 2 - 8);
+            kartOffset = Math.max(-maxOffset, Math.min(maxOffset, kartOffset + direction * 55));
+            dkKart.style.setProperty("--kart-offset", `${kartOffset}px`);
+        }
+
+        function handleSteering(direction, control) {
+            clearSteeringHighlight();
+            control.classList.add("active");
+            steerKart(direction);
+        }
+
+        steerLeft.addEventListener("click", () => handleSteering(-1, steerLeft));
+        steerRight.addEventListener("click", () => handleSteering(1, steerRight));
 
         function updateTextDisplay() {
             const pastChars = fullText.substring(Math.max(0, currentIndex - 10), currentIndex);
@@ -540,6 +630,13 @@
         }
 
         window.addEventListener("keydown", (e) => {
+            if (e.key === "4" || e.key === "7") {
+                const steeringControl = e.key === "4" ? steerLeft : steerRight;
+                handleSteering(e.key === "4" ? -1 : 1, steeringControl);
+                return;
+            }
+
+            clearSteeringHighlight();
             if (e.key === "Tab" || currentIndex >= fullText.length) return;
             if (e.key.length > 1 && e.key !== " ") return; 
 
