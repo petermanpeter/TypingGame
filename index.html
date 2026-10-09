@@ -68,10 +68,12 @@
         }
 
         .aerial-kart-card svg,
+        .aerial-kart-card img,
         .kart-back-view {
             display: block;
             width: 100%;
             height: 100%;
+            object-fit: contain;
         }
 
         .car-selector {
@@ -113,8 +115,8 @@
         }
 
         .car-selector-options {
-            display: flex;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px;
         }
 
@@ -249,7 +251,6 @@
             position: absolute;
             left: 50%;
             transform: translateX(calc(-50% + var(--kart-offset, 0px)));
-            transition: transform 0.18s ease-out;
             bottom: 30px;
             width: 145px;
             height: 155px;
@@ -497,9 +498,7 @@
 <body>
 
     <button class="aerial-kart-card" id="open-car-selector" type="button" aria-label="Choose a kart" aria-haspopup="dialog">
-        <svg viewBox="25 280 960 960" role="img" aria-label="Aerial view of Donkey Kong's kart">
-            <image href="DonkeyKong_car.jpg" width="2752" height="1536" />
-        </svg>
+        <img id="selected-kart-preview" src="DonkeyKong_car.jpg" alt="Aerial view of Donkey Kong's kart">
     </button>
 
     <dialog class="car-selector" id="car-selector" aria-labelledby="car-selector-title">
@@ -508,13 +507,21 @@
             <button class="car-selector-close" id="close-car-selector" type="button">Close</button>
         </div>
         <div class="car-selector-options">
-            <button class="car-option" type="button" data-kart-src="Mario_car_transparent.png" data-kart-alt="Back view of Mario's kart">
+            <button class="car-option" type="button" data-kart-src="Mario_car_transparent.png" data-kart-alt="Back view of Mario's kart" data-preview-src="Mario_car_transparent.png">
                 <img src="Mario_car_transparent.png" alt="">
                 <span>Mario</span>
             </button>
-            <button class="car-option" type="button" data-kart-src="DonkeyKong_kart_back.png" data-kart-alt="Back view of Donkey Kong's kart">
+            <button class="car-option" type="button" data-kart-src="DonkeyKong_kart_back.png" data-kart-alt="Back view of Donkey Kong's kart" data-preview-src="DonkeyKong_kart_back.png">
                 <img src="DonkeyKong_kart_back.png" alt="">
                 <span>Donkey Kong</span>
+            </button>
+            <button class="car-option" type="button" data-kart-src="Rosalina_car_transparent.png" data-kart-alt="Back view of Rosalina's kart" data-preview-src="Rosalina_car_transparent.png">
+                <img src="Rosalina_car_transparent.png" alt="">
+                <span>Rosalina</span>
+            </button>
+            <button class="car-option" type="button" data-kart-src="Toad_car_transparent.png" data-kart-alt="Back view of Toad's kart" data-preview-src="Toad_car_transparent.png">
+                <img src="Toad_car_transparent.png" alt="">
+                <span>Toad</span>
             </button>
         </div>
     </dialog>
@@ -620,8 +627,15 @@
         let kartVelocity = 0;      // The smoothed actual speed
         let roadOffset = 0;        
         let kartOffset = 0;
+        let steeringVelocity = 0;
+        let steeringDirection = 0;
+        let previousFrameTime = 0;
         let baseKartY = 30;        
         const maxVelocity = 25;    
+        const maxSteeringVelocity = 240;
+        const steeringAcceleration = 1100;
+        const steeringFriction = 900;
+        const steeringImpulse = 95;
         
         // DOM Elements
         const textPastEl = document.getElementById("text-past");
@@ -644,6 +658,7 @@
         const carSelector = document.getElementById("car-selector");
         const openCarSelector = document.getElementById("open-car-selector");
         const closeCarSelector = document.getElementById("close-car-selector");
+        const selectedKartPreview = document.getElementById("selected-kart-preview");
 
         let activeObstacles = [];
         let audioContext;
@@ -705,6 +720,8 @@
             document.querySelector(".keyboard-wrapper").classList.toggle("compact-spacebar", currentStage <= 2);
             currentIndex = 0;
             kartOffset = 0;
+            steeringVelocity = 0;
+            steeringDirection = 0;
             dkKart.style.setProperty("--kart-offset", "0px");
             clearSteeringHighlight();
             totalTyped = 0;
@@ -726,34 +743,70 @@
             steerRight.classList.remove("active");
         }
 
-        function steerKart(direction) {
+        function applySteeringImpulse(direction) {
+            steeringVelocity = Math.max(
+                -maxSteeringVelocity,
+                Math.min(maxSteeringVelocity, steeringVelocity + direction * steeringImpulse)
+            );
+        }
+
+        function updateKartSteering(deltaSeconds) {
+            if (steeringDirection) {
+                steeringVelocity = Math.max(
+                    -maxSteeringVelocity,
+                    Math.min(maxSteeringVelocity, steeringVelocity + steeringDirection * steeringAcceleration * deltaSeconds)
+                );
+            } else {
+                const friction = steeringFriction * deltaSeconds;
+                steeringVelocity = Math.abs(steeringVelocity) <= friction
+                    ? 0
+                    : steeringVelocity - Math.sign(steeringVelocity) * friction;
+            }
+
             const maxOffset = Math.max(0, (trackScene.clientWidth - dkKart.offsetWidth) / 2 - 8);
-            kartOffset = Math.max(-maxOffset, Math.min(maxOffset, kartOffset + direction * 55));
+            kartOffset = Math.max(-maxOffset, Math.min(maxOffset, kartOffset + steeringVelocity * deltaSeconds));
+            if ((kartOffset === -maxOffset && steeringVelocity < 0) || (kartOffset === maxOffset && steeringVelocity > 0)) {
+                steeringVelocity = 0;
+            }
             dkKart.style.setProperty("--kart-offset", `${kartOffset}px`);
         }
 
-        function handleSteering(direction, control) {
+        function startSteering(direction, control) {
             clearSteeringHighlight();
             control.classList.add("active");
-            steerKart(direction);
+            steeringDirection = direction;
+            applySteeringImpulse(direction);
+        }
+
+        function stopSteering(direction) {
+            if (steeringDirection === direction) steeringDirection = 0;
+            clearSteeringHighlight();
+        }
+
+        function clickSteering(direction, control) {
+            clearSteeringHighlight();
+            control.classList.add("active");
+            applySteeringImpulse(direction);
         }
 
         openCarSelector.addEventListener("click", () => carSelector.showModal());
         closeCarSelector.addEventListener("click", () => carSelector.close());
         document.querySelectorAll(".car-option").forEach(option => {
             option.addEventListener("click", () => {
-                const { kartSrc, kartAlt } = option.dataset;
-                if (!kartSrc || !kartAlt) {
-                    throw new Error("Kart options require an image source and alt text.");
+                const { kartSrc, kartAlt, previewSrc } = option.dataset;
+                if (!kartSrc || !kartAlt || !previewSrc) {
+                    throw new Error("Kart options require game and preview images and alt text.");
                 }
                 kartImage.src = kartSrc;
                 kartImage.alt = kartAlt;
+                selectedKartPreview.src = previewSrc;
+                selectedKartPreview.alt = kartAlt;
                 carSelector.close();
             });
         });
 
-        steerLeft.addEventListener("click", () => handleSteering(-1, steerLeft));
-        steerRight.addEventListener("click", () => handleSteering(1, steerRight));
+        steerLeft.addEventListener("click", () => clickSteering(-1, steerLeft));
+        steerRight.addEventListener("click", () => clickSteering(1, steerRight));
 
         function updateTextDisplay() {
             const pastChars = fullText.substring(Math.max(0, currentIndex - 10), currentIndex);
@@ -779,7 +832,8 @@
         window.addEventListener("keydown", (e) => {
             if (e.key === "4" || e.key === "7") {
                 const steeringControl = e.key === "4" ? steerLeft : steerRight;
-                handleSteering(e.key === "4" ? -1 : 1, steeringControl);
+                if (!e.repeat) startSteering(e.key === "4" ? -1 : 1, steeringControl);
+                e.preventDefault();
                 return;
             }
 
@@ -826,6 +880,16 @@
             if(e.key === " ") e.preventDefault();
         });
 
+        window.addEventListener("keyup", (e) => {
+            if (e.key === "4") stopSteering(-1);
+            if (e.key === "7") stopSteering(1);
+        });
+
+        window.addEventListener("blur", () => {
+            steeringDirection = 0;
+            clearSteeringHighlight();
+        });
+
         function spawnObstacle() {
             const emojis = ["🍄", "🐢", "🍌", "🪨", "🪙"];
             const ob = document.createElement("div");
@@ -860,7 +924,13 @@
             activeObstacles.push({ element: peel, y: -100, x: xPos });
         }
 
-        function gameLoop() {
+        function gameLoop(timestamp) {
+            const deltaSeconds = previousFrameTime
+                ? Math.min((timestamp - previousFrameTime) / 1000, 0.05)
+                : 0;
+            previousFrameTime = timestamp;
+            updateKartSteering(deltaSeconds);
+
             // 1) Natural deceleration of Target Velocity
             targetVelocity -= 0.12;
             if (targetVelocity < 0) targetVelocity = 0;
